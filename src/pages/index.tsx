@@ -7,6 +7,9 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import Image from "next/image";
 import { LoadingSpinner, LoadingPage } from "~/components/Loading";
+import { log } from "console";
+import { FormEvent, useRef } from "react";
+import { send } from "process";
 
 dayjs.extend(relativeTime);
 
@@ -24,17 +27,44 @@ function Avatar(props: { src: string; className?: string }) {
 
 function CreatePost() {
   const { user } = useUser();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const ctx = api.useContext();
+  const { mutate, isLoading: isPosting } = api.posts.create.useMutation({
+    onSuccess: () => {
+      if (!inputRef.current) {
+        return;
+      }
+
+      inputRef.current.value = "";
+      ctx.posts.getAll.invalidate();
+    },
+  });
+
+  function sendPost(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!inputRef.current) {
+      return;
+    }
+
+    mutate({ content: inputRef.current.value });
+  }
 
   if (!user) return null;
 
   return (
-    <div className="flex items-center gap-3 ">
+    <div className="flex items-center  ">
       <Avatar src={user.profileImageUrl} />
-      <input
-        type="text"
-        placeholder="type some emojis"
-        className="grow bg-transparent p-5 outline-none"
-      />
+      <form onSubmit={(e) => sendPost(e)}>
+        <input
+          type="text"
+          ref={inputRef}
+          placeholder="type some emojis"
+          disabled={isPosting}
+          className="grow bg-transparent p-5 outline-none"
+        />
+
+        <button type="submit" className="hidden"></button>
+      </form>
     </div>
   );
 }

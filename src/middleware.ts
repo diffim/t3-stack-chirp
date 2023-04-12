@@ -1,23 +1,20 @@
 import { withClerkMiddleware } from "@clerk/nextjs/server";
-import { log } from "console";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
  
 export default withClerkMiddleware((req: NextRequest) => {
-    
   return NextResponse.next();
 });
-  
+ 
 export const config = {
   matcher: [
     /*
      * Match all request paths except for the ones starting with:
      * - _next
      * - static (static files)
-     * - favicon.ico (favicon file)   
-     * - public folder
+     * - favicon.ico (favicon file)
      */
-    "/((?!static|.*\\..*|_next|favicon.ico).*)",
-    "/",
+    "/(.*?trpc.*?|(?!static|.*\\..*|_next|favicon.ico).*)",
+    "/"
   ],
-} 
+};
