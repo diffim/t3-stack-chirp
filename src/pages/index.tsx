@@ -10,6 +10,8 @@ import { LoadingSpinner, LoadingPage } from "~/components/Loading";
 import { log } from "console";
 import { FormEvent, useRef } from "react";
 import { send } from "process";
+import toast from "react-hot-toast";
+import Link from "next/link";
 
 dayjs.extend(relativeTime);
 
@@ -38,6 +40,16 @@ function CreatePost() {
       inputRef.current.value = "";
       ctx.posts.getAll.invalidate();
     },
+
+    onError: (e) => {
+      const errorMessage = e.data?.zodError?.fieldErrors.content;
+
+      if (errorMessage && errorMessage[0]) {
+        toast.error(errorMessage[0]);
+      } else {
+        toast.error("Failed to post! Please try again later.");
+      }
+    },
   });
 
   function sendPost(e: FormEvent<HTMLFormElement>) {
@@ -52,9 +64,12 @@ function CreatePost() {
   if (!user) return null;
 
   return (
-    <div className="flex items-center  ">
+    <div className="flex w-full  items-center">
       <Avatar src={user.profileImageUrl} />
-      <form onSubmit={(e) => sendPost(e)}>
+      <form
+        onSubmit={(e) => sendPost(e)}
+        className="flex grow items-center justify-between"
+      >
         <input
           type="text"
           ref={inputRef}
@@ -63,7 +78,14 @@ function CreatePost() {
           className="grow bg-transparent p-5 outline-none"
         />
 
-        <button type="submit" className="hidden"></button>
+        <div>
+          {isPosting && <LoadingSpinner />}
+          <button
+            type="submit"
+            disabled={isPosting}
+            className="hidden "
+          ></button>
+        </div>
       </form>
     </div>
   );
@@ -81,8 +103,12 @@ function PostsView(props: PostWithUser) {
 
       <div className="flex flex-col">
         <div className="flex text-slate-300">
-          <span>{`@${author.username}`}</span>{" "}
-          <span className="ml-2 ">{dayjs(post.createdAt).fromNow()}</span>
+          <Link href={`/@${author.username}`}>
+            <span>{`@${author.username}`}</span>
+          </Link>{" "}
+          <Link href={`/post/${post.id}`}>
+            <span className="ml-2 ">{dayjs(post.createdAt).fromNow()}</span>
+          </Link>
         </div>
 
         <span className="text-xl">{post.content}</span>
