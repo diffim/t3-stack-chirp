@@ -1,7 +1,15 @@
+import Head from "next/head";
 import React from "react";
 
 function Post() {
-  return <div>Post</div>;
+  return (
+    <>
+      <Head>
+        <title>Post</title>
+      </Head>
+      Post
+    </>
+  );
 }
 
 export default Post;

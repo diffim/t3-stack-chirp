@@ -6,12 +6,10 @@ import { z } from "zod";
 
 import { createTRPCRouter, privateProcedure, publicProcedure } from "~/server/api/trpc";
 
-const filterUserForClient = (user: User) => {
-  return { id: user.id, username: user.username, profilePicture: user.profileImageUrl}
-}
 
 import { Ratelimit } from "@upstash/ratelimit"; // for deno: see above
 import { Redis } from "@upstash/redis";
+import { filterUserForClient } from "~/server/helpers/filterUserForClient";
 
 // Create a new ratelimiter, that allows 5 requests per 10 seconds
 const ratelimit = new Ratelimit({
@@ -52,6 +50,23 @@ export const postsRouter = createTRPCRouter({
     }})  
 
   }),
+
+  getPostsByUserId: publicProcedure.input(z.object({userId: z.string()})).query(async ({ctx,input}) => {
+    const userId = input.userId
+
+    //prisma function which checks to see where authorid of post is equal to userid which we get from input
+    //note to self: learn prisma and about sql in general.
+    const posts = await ctx.prisma.post.findMany({
+      where: {
+        authorId: userId
+      },
+      take: 100,
+      orderBy: [{createdAt: "desc"}]
+    })
+
+
+    return posts
+  }) ,
   
   create: privateProcedure.input(z.object({ content: z.string().emoji("Only emojis allowed!").min(1).max(280) }))
   .mutation(async ({ctx, input}) => {
