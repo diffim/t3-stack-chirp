@@ -10,7 +10,7 @@ export function Avatar(props: {
       src={props.src}
       width={props.width_height || 56}
       height={props.width_height || 56}
-      className={props.className ? props.className : "" + " rounded-full "}
+      className={` rounded-full ${props.className ? props.className : ""}`}
       alt="Profile Image"
     />
   );
