@@ -8,10 +8,6 @@ function Profile({ userId }: { userId: string }) {
       userId: userId,
     });
 
-  if (isLoading) {
-    return <div>loading.</div>;
-  }
-
   if (!userProfile) throw new Error("Page not found");
 
   return (
@@ -39,8 +35,6 @@ function ProfileFeed(props: { userId: string }) {
     userId: props.userId,
   });
 
-  console.log(data);
-
   if (isLoading) return <LoadingPage />;
 
   if (!data || data.length === 0) return <div>User has not posted</div>;
@@ -58,23 +52,15 @@ function ProfileFeed(props: { userId: string }) {
   );
 }
 
-import { createProxySSGHelpers } from "@trpc/react-query/ssg";
-import { appRouter } from "~/server/api/root";
-import { prisma } from "~/server/db";
-import superjson from "superjson";
-import type { GetStaticPaths, GetStaticProps, NextPage } from "next";
+import type { GetStaticPaths, GetStaticProps } from "next";
 import { Avatar } from "~/components/Avatar";
 import { LoadingPage } from "~/components/Loading";
 import { PostsView } from "~/components/PostView";
+import { generateSSGHelper } from "~/server/helpers/ssgHelper";
 
 //ssg with trpc helpers cuz u cant use hooks in getstaticprops
 export const getStaticProps: GetStaticProps = async (context) => {
-  const ssg = createProxySSGHelpers({
-    router: appRouter,
-    ctx: { prisma, userId: null },
-    transformer: superjson, // optional - adds superjson serialization
-  });
-
+  const ssg = generateSSGHelper();
   const searchParamsUserId = context.params?.profile;
 
   if (typeof searchParamsUserId !== "string") throw new Error("no params");

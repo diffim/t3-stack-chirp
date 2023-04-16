@@ -58,6 +58,22 @@ export const postsRouter = createTRPCRouter({
 
   ),
 
+  getPostByPostId: publicProcedure.input(z.object({postId: z.string()})).query(async ({ctx,input}) => {
+    const postId = input.postId
+
+    const post = await ctx.prisma.post.findUnique({
+      where: {
+        id: postId
+      }
+    })
+
+    if (!post) throw new TRPCError({code: "NOT_FOUND", message: "Post not found!"})
+    const postArr = [post]
+
+
+    return addUserDataToPosts(postArr)
+  }),
+
   getPostsByUserId: publicProcedure.input(z.object({userId: z.string()})).query(async ({ctx,input}) => {
     const userId = input.userId
 
@@ -79,7 +95,7 @@ export const postsRouter = createTRPCRouter({
   .mutation(async ({ctx, input}) => {
     const authorId = ctx.userId
 
-    // upstash got the most godly ratelimiter broooo
+    // upstash got the most godly ratelimiter 
     // https://github.com/upstash/ratelimit
     const {success} = await ratelimit.limit(authorId)
 
