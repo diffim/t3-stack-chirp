@@ -18,7 +18,7 @@ function CreatePost() {
       }
 
       inputRef.current.value = "";
-      ctx.posts.getAll.invalidate();
+      ctx.posts.getAll.invalidate().catch((err) => console.error(err));
     },
 
     onError: (e) => {
