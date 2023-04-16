@@ -14,7 +14,9 @@ function Post({ postId }: { postId: string }) {
 
   return (
     <>
-      <Head>{/* <title>{userProfile.username}</title> */}</Head>
+      <Head>
+        <title>{`${postData.post.content} - @${postData.author.username}`}</title>
+      </Head>
       <div>
         <PostsView
           post={postData.post}
