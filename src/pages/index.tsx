@@ -1,20 +1,11 @@
 import { SignInButton, useUser } from "@clerk/nextjs";
 import { type NextPage } from "next";
-import Head from "next/head";
 import { api } from "~/utils/api";
-import type { RouterOutputs } from "~/utils/api";
-import dayjs from "dayjs";
-import relativeTime from "dayjs/plugin/relativeTime";
-import Image from "next/image";
 import { LoadingSpinner, LoadingPage } from "~/components/Loading";
-import { log } from "console";
 import { FormEvent, useRef } from "react";
-import { send } from "process";
 import toast from "react-hot-toast";
-import Link from "next/link";
 import { Avatar } from "~/components/Avatar";
-
-dayjs.extend(relativeTime);
+import { PostsView } from "~/components/PostView";
 
 function CreatePost() {
   const { user } = useUser();
@@ -80,32 +71,6 @@ function CreatePost() {
   );
 }
 
-//we need one element from the getall function in post
-type PostWithUser = RouterOutputs["posts"]["getAll"][number];
-
-function PostsView(props: PostWithUser) {
-  const { post, author } = props;
-
-  return (
-    <div key={post.id} className="flex gap-3  border-b border-slate-400 p-4 ">
-      <Avatar src={author.profilePicture} />
-
-      <div className="flex flex-col">
-        <div className="flex text-slate-300">
-          <Link href={`/${author.id}`}>
-            <span>{`@${author.username}`}</span>
-          </Link>{" "}
-          <Link href={`/post/${post.id}`}>
-            <span className="ml-2 ">{dayjs(post.createdAt).fromNow()}</span>
-          </Link>
-        </div>
-
-        <span className="text-xl">{post.content}</span>
-      </div>
-    </div>
-  );
-}
-
 function Feed() {
   const { data, isLoading: postsLoading } = api.posts.getAll.useQuery();
 
@@ -133,7 +98,7 @@ const Home: NextPage = () => {
 
   return (
     <>
-      <div className="flex items-center  border-b border-slate-400  p-4">
+      <div className="flex items-center  border-b border-gray-400  p-4">
         {!isSignedIn && (
           <div className="flex justify-center">
             <SignInButton />

@@ -2,7 +2,7 @@ import Head from "next/head";
 import React from "react";
 import { api } from "~/utils/api";
 
-const Profile: NextPage<{ userId: string }> = ({ userId }) => {
+function Profile({ userId }: { userId: string }) {
   const { data: userProfile, isLoading } =
     api.profile.getUserByUsername.useQuery({
       userId: userId,
@@ -19,29 +19,43 @@ const Profile: NextPage<{ userId: string }> = ({ userId }) => {
       <Head>
         <title>{userProfile.username}</title>
       </Head>
-      <div className="relative flex h-48 border-b  border-slate-400  bg-slate-600 p-5 px-12 pb-0">
+      <div className=" relative mb-20 flex h-48 border-b border-gray-400  bg-gray-700 p-5 px-12 pb-0">
         <Avatar
           width_height={180}
-          className="absolute  top-20  border-8 border-slate-800 bg-slate-800"
+          className="absolute  top-20  border-8 border-gray-800 bg-gray-800"
           src={userProfile.profilePicture}
         />
         <div className=" mb-5 ml-auto mt-auto  text-3xl font-semibold">
           {userProfile.username}
         </div>
-
-        <ProfileFeed userId={userId} />
       </div>
+      <ProfileFeed userId={userId} />
     </>
   );
-};
+}
 
 function ProfileFeed(props: { userId: string }) {
-  const { data } = api.posts.getPostsByUserId.useQuery({
+  const { data, isLoading } = api.posts.getPostsByUserId.useQuery({
     userId: props.userId,
   });
 
   console.log(data);
-  return <></>;
+
+  if (isLoading) return <LoadingPage />;
+
+  if (!data || data.length === 0) return <div>User has not posted</div>;
+
+  return (
+    <div className="flex flex-col">
+      {data.map((postWithAuthor) => (
+        <PostsView
+          post={postWithAuthor.post}
+          key={postWithAuthor.post.id}
+          author={postWithAuthor.author}
+        />
+      ))}
+    </div>
+  );
 }
 
 import { createProxySSGHelpers } from "@trpc/react-query/ssg";
@@ -50,6 +64,8 @@ import { prisma } from "~/server/db";
 import superjson from "superjson";
 import type { GetStaticPaths, GetStaticProps, NextPage } from "next";
 import { Avatar } from "~/components/Avatar";
+import { LoadingPage } from "~/components/Loading";
+import { PostsView } from "~/components/PostView";
 
 //ssg with trpc helpers cuz u cant use hooks in getstaticprops
 export const getStaticProps: GetStaticProps = async (context) => {

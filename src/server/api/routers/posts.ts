@@ -10,6 +10,30 @@ import { createTRPCRouter, privateProcedure, publicProcedure } from "~/server/ap
 import { Ratelimit } from "@upstash/ratelimit"; // for deno: see above
 import { Redis } from "@upstash/redis";
 import { filterUserForClient } from "~/server/helpers/filterUserForClient";
+import type { Post } from "@prisma/client";
+
+async function addUserDataToPosts(posts: Post[]) {
+  const users = (await clerkClient.users.getUserList({
+    userId: posts.map((post) => post.authorId),
+    limit: 100 
+  })).map(filterUserForClient)
+
+
+  return posts.map(post => {
+    const author = users.find((user) => user.id === post.authorId)
+    if (!author || !author.username) throw new TRPCError({code: "INTERNAL_SERVER_ERROR", message: "Author for post not found"})
+
+
+    return { 
+    post, 
+    author: {
+      ...author,
+      username: author.username
+    },
+
+    }
+  })
+}
 
 // Create a new ratelimiter, that allows 5 requests per 10 seconds
 const ratelimit = new Ratelimit({
@@ -28,28 +52,11 @@ const ratelimit = new Ratelimit({
 export const postsRouter = createTRPCRouter({ 
   getAll: publicProcedure.query(async ({ ctx }) => {
     const posts = await ctx.prisma.post.findMany({take: 100,  orderBy: [ {createdAt: "desc"}]}); 
+  
+    return addUserDataToPosts(posts)
+    }  
 
-
-    const users = (await clerkClient.users.getUserList({
-      userId: posts.map((post) => post.authorId),
-      limit: 100 
-    })).map(filterUserForClient)
-
- 
-    return posts.map(post => {
-      const author = users.find((user) => user.id === post.authorId)
-      if (!author || !author.username) throw new TRPCError({code: "INTERNAL_SERVER_ERROR", message: "Author for post not found"})
-
-
-      return { 
-      post, 
-      author: {
-        ...author,
-        username: author.username
-      },
-    }})  
-
-  }),
+  ),
 
   getPostsByUserId: publicProcedure.input(z.object({userId: z.string()})).query(async ({ctx,input}) => {
     const userId = input.userId
@@ -65,7 +72,7 @@ export const postsRouter = createTRPCRouter({
     })
 
 
-    return posts
+    return addUserDataToPosts(posts)
   }) ,
   
   create: privateProcedure.input(z.object({ content: z.string().emoji("Only emojis allowed!").min(1).max(280) }))
